@@ -1,7 +1,7 @@
 import logging
 from enum import IntEnum
 
-import lzo
+from pygbx.lzo import LZO
 import zlib
 
 import pygbx.headers as headers
@@ -23,7 +23,7 @@ class GbxType(IntEnum):
     REPLAY_RECORD_OLD = 0x02407E000
     GAME_GHOST = 0x0303F005
     CTN_GHOST = 0x03092000
-    CTN_GHOST_OLD = 0x2401B000 
+    CTN_GHOST_OLD = 0x2401B000
     CTN_COLLECTOR = 0x0301A000
     CTN_OBJECT_INFO = 0x0301C000
     CTN_DECORATION = 0x03038000
@@ -79,7 +79,8 @@ class Gbx(object):
         else:
             self.root_parser = ByteReader(obj)
 
-        magic = self.root_parser.read(3, '3s')
+        self.magic = self.root_parser.read(3, '3s')
+
         try:
             magic = magic.decode('utf-8')
         except:
@@ -87,7 +88,7 @@ class Gbx(object):
 
         if magic != 'GBX':
             raise GbxLoadError(f'obj is not a valid Gbx data: magic string is incorrect')
-            
+
         self.version = self.root_parser.read(2, 'H')
         self.classes = {}
         self.root_classes = {}
@@ -95,6 +96,8 @@ class Gbx(object):
         self.__current_class = None
         self.__current_waypoint = None
         self.__replay_header_info = {}
+
+        self.lzo = LZO()
 
         self.root_parser.skip(3)
         if self.version >= 4:
@@ -131,12 +134,15 @@ class Gbx(object):
                     self.root_parser.skip(4)
 
         self.root_parser.push_info()
-        self.positions["data_size"] = self.root_parser.pop_info()
+        self.positions['data_size'] = self.root_parser.pop_info()
 
-        data_size = self.root_parser.read_uint32()
-        compressed_data_size = self.root_parser.read_uint32()
-        cdata = self.root_parser.read(compressed_data_size)
-        self.data = bytearray(lzo.decompress(cdata, False, data_size))
+        uncompressed_size = self.root_parser.read_uint32()
+        compressed_size = self.root_parser.read_uint32()
+        compressed_data = self.root_parser.read(compressed_size)
+        self.data = self.lzo.decompress(compressed_data, uncompressed_size)
+
+        if not self.data:
+            raise GbxLoadError(f'data decompression has failed')
 
         bp = ByteReader(self.data)
         self._read_node(self.class_id, -1, bp)
