@@ -24,5 +24,5 @@ setup(
   ],
   package_dir={'pygbx': 'pygbx'},
   include_package_data=True,
-  package_data={'pygbx': ['lzo/libs/lzo1x.*']},
+  # package_data={'pygbx': ['lzo/libs/lzo1x.*']},
 )
