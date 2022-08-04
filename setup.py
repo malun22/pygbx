@@ -25,5 +25,5 @@ setup(
   package_dir={'pygbx': 'pygbx'},
   include_package_data=True,
   package_data={'pygbx': ['lzo/libs/lzo1x.*']},
-  data_files=["pygbx/lzo/libs/lzo1x_32.dll", "pygbx/lzo/libs/lzo1x_64.dll"],
+  data_files=["pygbx/lzo/libs/lzo1x_32.dll", "pygbx/lzo/libs/lzo1x_64.dll", "pygbx/lzo/libs/lzo1x_32.so", "pygbx/lzo/libs/lzo1x_64.so"],
 )
